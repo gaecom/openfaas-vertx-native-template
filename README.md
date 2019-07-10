@@ -14,7 +14,7 @@ Functions are pure java `xyz.jetdrone.openfaas.vertx.OpenFaaS` implementations. 
 import io.vertx.ext.web.RoutingContext;
 import xyz.jetdrone.openfaas.vertx.OpenFaaS;
 
-public class MyFunction implements OpenFaaS {
+public class MyFunction implements Lambda {
   @Override
   public void handle(RoutingContext ctx) {
 		ctx.response().end("Hi!");

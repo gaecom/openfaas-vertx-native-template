@@ -1,6 +1,7 @@
 # Get a build environment
-FROM oracle/graalvm-ce:1.0.0-rc13 as build-aot
-
+FROM oracle/graalvm-ce:19.1.0 as build-aot
+# Install the native image compiler
+RUN gu install native-image
 # Set working dir
 RUN mkdir /app
 WORKDIR /app
@@ -15,7 +16,7 @@ RUN ./mvnw -f /app/function/pom.xml package
 # At this point the native image is built
 
 # Create new image from alpine
-FROM frolvlad/alpine-glibc:alpine-3.8
+FROM frolvlad/alpine-glibc:alpine-3.10
 RUN apk add --no-cache ca-certificates
 
 RUN addgroup -S app && adduser -S -g app app
@@ -34,12 +35,14 @@ RUN mkdir -p /home/app
 # Wrapper/boot-strapper
 WORKDIR /home/app
 # Copy the SUNEC lib from graal to the final image
-COPY --from=build-aot /opt/graalvm-ce-1.0.0-rc13/jre/lib/amd64/libsunec.so /usr/lib/libsunec.so
+COPY --from=build-aot /opt/graalvm-ce-19.1.0/jre/lib/amd64/libsunec.so /usr/lib/libsunec.so
 # Copy generated native executable from build-aot
-COPY --from=build-aot /app/function/target/vertx-fn /usr/bin/vertx-fn
+COPY --from=build-aot /app/function/target/bootstrap /usr/bin/vertx-fn
 
 USER app
 
+ENV _HANDLER=/acme/MyFunction
+ENV port="8000"
 ENV cgi_headers="true"
 ENV fprocess="vertx-fn"
 ENV mode="http"
